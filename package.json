@@ -1,0 +1,20 @@
+{
+  "name": "my_compassion_app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "sync:dev": "cp capacitor.config.dev.ts capacitor.config.ts && npx cap sync ios",
+    "sync:prod": "cp capacitor.config.prod.ts capacitor.config.ts && npx cap sync ios"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.1.0",
+    "@capacitor/core": "^8.1.0",
+    "@capacitor/ios": "^8.1.0",
+    "@capacitor/push-notifications": "^8.0.3"
+  }
+}
