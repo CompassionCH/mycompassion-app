@@ -1,18 +1,19 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: "ch.mycompassion.app",
-  appName: "My Compassion",
+  appId: "ch.mycompassion.app.",
+  appName: "MyCompassionCH",
   webDir: "www",
   bundledWebRuntime: false,
-  server: {
-    url: "https://mycompassion.ch",
-    cleartext: false,
-    allowNavigation: [
-      "mycompassion.ch",
-      "*.mycompassion.ch",
-      "compassion.ch",
-      "*.compassion.ch"
+  "server": {
+    "url": "https://stage14.compassion.ch/web/login",
+    "cleartext": true,
+    "allowNavigation": [
+        "mycompassion.ch",
+        "*.mycompassion.ch",
+        "compassion.ch",
+        "*.compassion.ch",
+        "*.nip.io"
     ]
   }
 };
