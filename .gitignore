@@ -25,3 +25,5 @@ xcuserdata/
 node_modules
 *.DS_Store
 ios-configs
+ios/App/App/GoogleService-Info.dev.plist
+ios/App/App/GoogleService-Info.prod.plist
