@@ -63,19 +63,31 @@
             document.body.appendChild(overlay);
         }
 
-        // Show the overlay immediately
+        // Prevent race condition: clear existing timeout before starting a new one
+        if (spinnerTimeout) {
+            clearTimeout(spinnerTimeout);
+        }
+
         overlay.style.display = 'flex';
 
-        // FAILSAFE: Auto-hide the spinner after 6 seconds.
-        // (Just in case an action fails or it was an AJAX background request, we don't want to trap the user)
-        setTimeout(() => {
+        // Extended Failsafe timeout
+        spinnerTimeout = setTimeout(() => {
             overlay.style.display = 'none';
-        }, 6000);
+        }, 15000);
         
     }, { capture: true });
 
     // 3. Clear the spinner if the user hits the "Back" button (iOS caching fix)
     window.addEventListener('pageshow', function() {
+        if (spinnerTimeout) clearTimeout(spinnerTimeout);
         overlay.style.display = 'none';
     });
+
+    // 4. Odoo 14 Integration: Clear spinner automatically on AJAX/RPC completion
+    if (typeof window.jQuery !== 'undefined') {
+        window.jQuery(document).ajaxStop(function () {
+            if (spinnerTimeout) clearTimeout(spinnerTimeout);
+            overlay.style.display = 'none';
+        });
+    }
 })();
