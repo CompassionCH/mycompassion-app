@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   bundledWebRuntime: false,
   "server": {
     "url": "https://stage14.compassion.ch/web/login",
-    "cleartext": true,
+    "cleartext": false,
     "allowNavigation": [
         "mycompassion.ch",
         "*.mycompassion.ch",
