@@ -13,8 +13,17 @@ const config: CapacitorConfig = {
         "*.mycompassion.ch",
         "compassion.ch",
         "*.compassion.ch",
+        "postfinance.ch",
+        "*.postfinance.ch",
     ]
-  }
+  },
+  "plugins": {
+      "SplashScreen": {
+        "launchAutoHide": false,
+        "backgroundColor": "#2a5eec",
+        "showSpinner": false
+      }
+    }
 };
 
 export default config;

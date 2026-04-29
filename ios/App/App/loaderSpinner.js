@@ -35,7 +35,7 @@
         let target = e.target.closest('a, button');
         
         if (!target) {
-            let container = e.target.closest('.position-relative, .card, [class*="card"]');
+            let container = e.target.closest('.position-relative, .card, [class*="card"], .my2-bottom-nav');
             if (container) {
                 let stretchedLink = container.querySelector('.stretched-link');
                 if (stretchedLink) {

@@ -9,8 +9,8 @@
 /* Begin PBXBuildFile section */
 		014C485D2F767FB30008E358 /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 014C485C2F767FB30008E358 /* capacitor.config.json */; };
 		014C485F2F76A11A0008E358 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014C485E2F76A10F0008E358 /* ViewController.swift */; };
-		014C48612F76B2670008E358 /* pullToRefresh.js in Resources */ = {isa = PBXBuildFile; fileRef = 014C48602F76B25C0008E358 /* pullToRefresh.js */; };
 		014C48632F76B5170008E358 /* loaderSpinner.js in Resources */ = {isa = PBXBuildFile; fileRef = 014C48622F76B5060008E358 /* loaderSpinner.js */; };
+		01D0BE702FA2313F00770FD6 /* splashScreenHide.js in Resources */ = {isa = PBXBuildFile; fileRef = 01D0BE6F2FA2313F00770FD6 /* splashScreenHide.js */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
@@ -24,10 +24,10 @@
 		014395202F7D4E5900B1B3AF /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		014C485C2F767FB30008E358 /* capacitor.config.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		014C485E2F76A10F0008E358 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		014C48602F76B25C0008E358 /* pullToRefresh.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = pullToRefresh.js; sourceTree = "<group>"; };
 		014C48622F76B5060008E358 /* loaderSpinner.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = loaderSpinner.js; sourceTree = "<group>"; };
 		015BAF562F7EB07600D8879B /* GoogleService-Info.prod.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.prod.plist"; sourceTree = "<group>"; };
 		01BF75E22F7EABAB006F2422 /* GoogleService-Info.dev.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.dev.plist"; sourceTree = "<group>"; };
+		01D0BE6F2FA2313F00770FD6 /* splashScreenHide.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = splashScreenHide.js; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -73,7 +73,7 @@
 			children = (
 				014395202F7D4E5900B1B3AF /* App.entitlements */,
 				014C48622F76B5060008E358 /* loaderSpinner.js */,
-				014C48602F76B25C0008E358 /* pullToRefresh.js */,
+				01D0BE6F2FA2313F00770FD6 /* splashScreenHide.js */,
 				014C485E2F76A10F0008E358 /* ViewController.swift */,
 				014C485C2F767FB30008E358 /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -159,8 +159,8 @@
 				50B271D11FEDC1A000F3C39B /* public in Resources */,
 				504EC30F1FED79650016851F /* Assets.xcassets in Resources */,
 				014C485D2F767FB30008E358 /* capacitor.config.json in Resources */,
+				01D0BE702FA2313F00770FD6 /* splashScreenHide.js in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
-				014C48612F76B2670008E358 /* pullToRefresh.js in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

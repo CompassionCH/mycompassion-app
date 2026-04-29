@@ -16,16 +16,6 @@ class ViewController: CAPBridgeViewController {
         // ---------------------------------------------------------
         // LOAD AND INJECT JAVASCRIPT COMPONENTS
         // ---------------------------------------------------------
-        // Pull to refresh
-        if let fileURL = Bundle.main.url(forResource: "pullToRefresh", withExtension: "js"),
-           let ptrScript = try? String(contentsOf: fileURL) {
-            
-            let script = WKUserScript(source: ptrScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
-            self.bridge?.webView?.configuration.userContentController.addUserScript(script)
-            
-        } else {
-            print("❌ WARNING: Could not find or load pullToRefresh.js")
-        }
         // Loading spinner
         if let fileURL = Bundle.main.url(forResource: "loaderSpinner", withExtension: "js"),
            let loaderScript = try? String(contentsOf: fileURL) {
@@ -34,6 +24,16 @@ class ViewController: CAPBridgeViewController {
             self.bridge?.webView?.configuration.userContentController.addUserScript(script)
         } else {
             print("❌ WARNING: Could not find or load loaderSpinner.js")
+        }
+        
+        // Splash Screen hider
+        if let fileURL = Bundle.main.url(forResource: "splashScreenHide", withExtension: "js"),
+           let loaderScript = try? String(contentsOf: fileURL) {
+
+            let script = WKUserScript(source: loaderScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+            self.bridge?.webView?.configuration.userContentController.addUserScript(script)
+        } else {
+            print("❌ WARNING: Could not find or load splashScreenHide.js")
         }
         
         

@@ -17,6 +17,7 @@
     "@capacitor/core": "^8.1.0",
     "@capacitor/dialog": "^8.0.1",
     "@capacitor/ios": "^8.1.0",
-    "@capacitor/push-notifications": "^8.0.3"
+    "@capacitor/push-notifications": "^8.0.3",
+    "@capacitor/splash-screen": "^8.0.1"
   }
 }
