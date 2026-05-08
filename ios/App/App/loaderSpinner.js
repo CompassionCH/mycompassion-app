@@ -8,6 +8,9 @@
     if (window.hasClickLoader) return;
     window.hasClickLoader = true;
 
+    // Explicitly declare the timeout variable to prevent ReferenceErrors
+    let spinnerTimeout = null;
+
     // 1. Create the full-screen blurred overlay
     let overlay = document.createElement('div');
     overlay.style.position = 'fixed';
@@ -29,10 +32,11 @@
         <style>@keyframes click-spin { to { transform: rotate(360deg); } }</style>
     `;
 
-    // 2. Intercept Clicks Globally
+    // Intercept Clicks Globally
     document.addEventListener('click', function(e) {
-        // Check if the user clicked a link or a button
-        let target = e.target.closest('a, button');
+        
+        // FIX Catch standard input form submissions in addition to buttons and links
+        let target = e.target.closest('a, button, input[type="submit"]');
         
         if (!target) {
             let container = e.target.closest('.position-relative, .card, [class*="card"], .my2-bottom-nav');
@@ -59,8 +63,31 @@
             return;
         }
         
+        // Failsafe to ensure the body exists before appending
+        if (!document.body) return;
+
         if (!document.body.contains(overlay)) {
             document.body.appendChild(overlay);
+        }
+        
+        // Native Haptic Feedback
+        try {
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
+                // If the JS wrapper exists, use it
+                window.Capacitor.Plugins.Haptics.impact({ style: 'LIGHT' }).catch(()=>{});
+            } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bridge) {
+                // Bypass the missing NPM package and talk directly to the iOS Swift layer!
+                window.webkit.messageHandlers.bridge.postMessage({
+                    type: 'message',
+                    callbackId: 'haptic_click_' + Date.now(),
+                    pluginId: 'Haptics',
+                    methodName: 'impact',
+                    options: { style: 'LIGHT' }
+                });
+                console.log("Capacitor Bridge: Fired raw haptic message to Swift layer.");
+            }
+        } catch (err) {
+            console.log("Haptic bridge failed:", err);
         }
 
         // Prevent race condition: clear existing timeout before starting a new one
@@ -77,17 +104,19 @@
         
     }, { capture: true });
 
-    // 3. Clear the spinner if the user hits the "Back" button (iOS caching fix)
+    // Clear the spinner if the user hits the "Back" button (iOS caching fix)
     window.addEventListener('pageshow', function() {
         if (spinnerTimeout) clearTimeout(spinnerTimeout);
         overlay.style.display = 'none';
     });
 
-    // 4. Odoo 14 Integration: Clear spinner automatically on AJAX/RPC completion
-    if (typeof window.jQuery !== 'undefined') {
-        window.jQuery(document).ajaxStop(function () {
-            if (spinnerTimeout) clearTimeout(spinnerTimeout);
-            overlay.style.display = 'none';
-        });
-    }
+    // Odoo Integration: Clear spinner automatically on AJAX/RPC completion
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof window.jQuery !== 'undefined') {
+            window.jQuery(document).ajaxStop(function () {
+                if (spinnerTimeout) clearTimeout(spinnerTimeout);
+                overlay.style.display = 'none';
+            });
+        }
+    });
 })();

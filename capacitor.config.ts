@@ -22,9 +22,7 @@ const config: CapacitorConfig = {
       "SplashScreen": {
         "launchAutoHide": false,
         "backgroundColor": "#2a5eec",
-        "showSpinner": true,
-        "iosSpinnerStyle": "large",
-        "spinnerColor": "#ffffff"
+        "showSpinner": false
       }
     }
 };
