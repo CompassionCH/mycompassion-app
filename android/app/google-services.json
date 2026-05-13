@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "839847907332",
+    "project_id": "my2-mobile-notifications",
+    "storage_bucket": "my2-mobile-notifications.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:839847907332:android:f21c4f03d106a90b99a551",
+        "android_client_info": {
+          "package_name": "ch.mycompassion.app.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDJgGNi-pmOc5pIDEaB4wIFUahWV44Zdg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

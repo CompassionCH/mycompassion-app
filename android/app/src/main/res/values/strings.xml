@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MyCompassionCH Dev</string>
+    <string name="title_activity_main">MyCompassionCH Dev</string>
+    <string name="package_name">ch.mycompassion.app.dev</string>
+    <string name="custom_url_scheme">ch.mycompassion.app.dev</string>
+</resources>

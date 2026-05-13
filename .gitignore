@@ -27,3 +27,6 @@ node_modules
 ios-configs
 ios/App/App/GoogleService-Info.dev.plist
 ios/App/App/GoogleService-Info.prod.plist
+android-configs
+android/.idea
+android/.kotlin
