@@ -1,4 +1,4 @@
-package ch.mycompassion.app.dev;
+package ch.mycompassion.app;
 
 import android.os.Bundle;
 import android.view.View;
