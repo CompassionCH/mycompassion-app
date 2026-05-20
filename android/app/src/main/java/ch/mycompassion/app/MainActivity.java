@@ -1,5 +1,6 @@
 package ch.mycompassion.app;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -126,6 +127,12 @@ public class MainActivity extends BridgeActivity {
             } else if ("exit".equals(command)) {
                 // If Javascript tells us to exit, trigger the soft-close natively!
                 new Handler(Looper.getMainLooper()).post(() -> moveTaskToBack(true));
+            } else if (command.startsWith("open:")) {
+                String url = command.substring(5);
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    startActivity(intent);
+                });
             }
         }
     }
@@ -219,7 +226,9 @@ public class MainActivity extends BridgeActivity {
                 "    let target = e.target.closest('a, button, input[type=\"submit\"], .stretched-link');" +
                 "    if (!target) return;" +
                 "    let href = target.getAttribute('href');" +
+                "    let tgt = target.getAttribute('target');" +
                 "    if (target.hasAttribute('data-toggle') || !href || href.startsWith('#') || href.startsWith('javascript:')) return;" +
+                "    if (tgt === '_blank' || tgt === '_system') return;" +
                 "    if (window.nativeLoader) window.nativeLoader.postMessage('show');" +
                 "});" +
 
@@ -261,6 +270,19 @@ public class MainActivity extends BridgeActivity {
                 "    hideNativeLoader();" +
                 "} else {" +
                 "    observer.observe(document.body, { childList: true, subtree: true });" +
+                "}" +
+
+                "if (!window._systemOpenOverridden) {" +
+                "    window._systemOpenOverridden = true;" +
+                "    var _origOpen = window.open;" +
+                "    window.open = function(url, target, features) {" +
+                "        var isExternal = typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'));" +
+                "        var isExternalTarget = target === '_system' || target === '_blank';" +
+                "        if (isExternal && isExternalTarget) {" +
+                "            if (window.nativeLoader) { window.nativeLoader.postMessage('open:' + url); return null; }" +
+                "        }" +
+                "        return _origOpen.apply(this, arguments);" +
+                "    };" +
                 "}" +
 
                 "window.addEventListener('pageshow', hideNativeLoader);" +
