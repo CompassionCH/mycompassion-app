@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		014C485D2F767FB30008E358 /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 014C485C2F767FB30008E358 /* capacitor.config.json */; };
 		014C485F2F76A11A0008E358 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014C485E2F76A10F0008E358 /* ViewController.swift */; };
+		01556A1B2FC049B900E7A188 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 01556A1A2FC049B900E7A188 /* GoogleService-Info.plist */; };
 		0175F6972FB39FF500A89108 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 0175F6962FB39FF500A89108 /* Lottie */; };
 		0175F69B2FB3A39400A89108 /* loading.lottie in Resources */ = {isa = PBXBuildFile; fileRef = 0175F69A2FB3A39400A89108 /* loading.lottie */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
@@ -24,9 +25,8 @@
 		014395202F7D4E5900B1B3AF /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		014C485C2F767FB30008E358 /* capacitor.config.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		014C485E2F76A10F0008E358 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		015BAF562F7EB07600D8879B /* GoogleService-Info.prod.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.prod.plist"; sourceTree = "<group>"; };
+		01556A1A2FC049B900E7A188 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		0175F69A2FB3A39400A89108 /* loading.lottie */ = {isa = PBXFileReference; lastKnownFileType = file; path = loading.lottie; sourceTree = "<group>"; };
-		01BF75E22F7EABAB006F2422 /* GoogleService-Info.dev.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.dev.plist"; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -81,9 +81,8 @@
 				504EC3131FED79650016851F /* Info.plist */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
-				01BF75E22F7EABAB006F2422 /* GoogleService-Info.dev.plist */,
-				015BAF562F7EB07600D8879B /* GoogleService-Info.prod.plist */,
 				0175F69A2FB3A39400A89108 /* loading.lottie */,
+				01556A1A2FC049B900E7A188 /* GoogleService-Info.plist */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -156,6 +155,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0175F69B2FB3A39400A89108 /* loading.lottie in Resources */,
+				01556A1B2FC049B900E7A188 /* GoogleService-Info.plist in Resources */,
 				504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */,
 				50B271D11FEDC1A000F3C39B /* public in Resources */,
 				504EC30F1FED79650016851F /* Assets.xcassets in Resources */,
@@ -184,7 +184,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nDEV_CONFIG=\"${PROJECT_DIR}/App/GoogleService-Info.dev.plist\"\nPROD_CONFIG=\"${PROJECT_DIR}/App/GoogleService-Info.prod.plist\"\n\n# Destination path in the app bundle\nDESTINATION=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/GoogleService-Info.plist\"\n\nif [ \"${CONFIGURATION}\" == \"Debug\" ]; then\n    echo \"Using Dev Firebase Config\"\n    cp \"${DEV_CONFIG}\" \"${DESTINATION}\"\nelse\n    echo \"Using Prod Firebase Config\"\n    cp \"${PROD_CONFIG}\" \"${DESTINATION}\"\nfi\n";
+			shellScript = "CONFIG=\"${PROJECT_DIR}/App/GoogleService-Info.plist\"\nDESTINATION=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/GoogleService-Info.plist\"\necho \"Using Firebase Config: ${CONFIG}\"\ncp \"${CONFIG}\" \"${DESTINATION}\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -337,7 +337,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = 33XBVM48T4;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MyCompassionCH;
@@ -364,7 +364,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = 33XBVM48T4;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MyCompassionCH;
