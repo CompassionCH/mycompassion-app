@@ -7,7 +7,7 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:stage14.compassion.ch</string>
-		<string>applinks:my.compassion.ch</string>
+		<string>applinks:mycompassion.ch</string>
 	</array>
 </dict>
 </plist>
