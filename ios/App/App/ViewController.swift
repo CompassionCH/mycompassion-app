@@ -8,12 +8,14 @@ import UIKit
 import Capacitor
 import WebKit
 import Lottie
+import QuickLook
 
-class ViewController: CAPBridgeViewController, WKScriptMessageHandler {
-    
+class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreviewControllerDataSource {
+
     // Create native UI elements
     var loaderOverlay: UIVisualEffectView!
     var animationView: LottieAnimationView!
+    var previewFileURL: URL?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -77,6 +79,64 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler {
                 });
             }
         }, 100);
+
+        // Download /my/download/ PDFs natively and preview them with QuickLook.
+        // These pages use a <form> (tax receipt) and onclick-divs (payment slips)
+        // instead of <a> links, so the WKWebView would otherwise render the PDF
+        // inline without Done/Share buttons.
+        async function nativeDownload(url) {
+            window.webkit.messageHandlers.nativeLoader.postMessage("show");
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Network response was not ok");
+                const blob = await response.blob();
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    try {
+                        const base64data = reader.result.split(",")[1];
+                        const raw = url.split("/").pop().split("?")[0];
+                        const filename = raw.endsWith(".pdf") ? raw : raw + ".pdf";
+                        const saved = await window.Capacitor.Plugins.Filesystem.writeFile({
+                            path: filename,
+                            data: base64data,
+                            directory: "CACHE",
+                        });
+                        window.webkit.messageHandlers.nativePdf.postMessage(saved.uri);
+                    } catch (error) {
+                        window.webkit.messageHandlers.nativeLoader.postMessage("hide");
+                        alert("Could not load the document. Please try again.");
+                    }
+                };
+                reader.readAsDataURL(blob);
+            } catch (error) {
+                window.webkit.messageHandlers.nativeLoader.postMessage("hide");
+                alert("Could not load the document. Please try again.");
+            }
+        }
+
+        // Payment slip / QR invoice buttons: <div onclick="location.href='/my/download/...'">
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('[onclick]');
+            if (!btn) return;
+            const oc = btn.getAttribute('onclick') || '';
+            if (!oc.includes('/my/download/')) return;
+            const start = oc.indexOf("'") + 1;
+            const end = oc.lastIndexOf("'");
+            if (start <= 0 || end <= start) return;
+            e.preventDefault();
+            e.stopPropagation();
+            nativeDownload(oc.substring(start, end));
+        }, true);
+
+        // Tax receipt: plain GET form posting to /my/download/tax_receipt
+        document.addEventListener('submit', function(e) {
+            const action = e.target.getAttribute('action') || '';
+            if (!action.includes('/my/download/')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const params = new URLSearchParams(new FormData(e.target)).toString();
+            nativeDownload(action + (params ? '?' + params : ''));
+        }, true);
         """
         
         let script = WKUserScript(source: js, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
@@ -84,6 +144,8 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler {
         
         // Register the "nativeLoader" listener so Swift can hear the JS
         self.bridge?.webView?.configuration.userContentController.add(self, name: "nativeLoader")
+        // Register the "nativePdf" listener for the QuickLook PDF preview
+        self.bridge?.webView?.configuration.userContentController.add(self, name: "nativePdf")
     }
 
     // ---------------------------------------------------------
@@ -136,7 +198,31 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler {
         if message.name == "nativeLoader", let command = message.body as? String {
             if command == "show" { showLoader() }
             else if command == "hide" { hideLoader() }
+        } else if message.name == "nativePdf", let filePath = message.body as? String {
+            presentPdfPreview(filePath)
         }
+    }
+
+    // ---------------------------------------------------------
+    // NATIVE PDF PREVIEW (QuickLook)
+    // ---------------------------------------------------------
+    func presentPdfPreview(_ filePath: String) {
+        DispatchQueue.main.async {
+            self.hideLoader()
+            guard let url = URL(string: filePath) else { return }
+            self.previewFileURL = url
+            let preview = QLPreviewController()
+            preview.dataSource = self
+            self.present(preview, animated: true)
+        }
+    }
+
+    func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+        return previewFileURL == nil ? 0 : 1
+    }
+
+    func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+        return previewFileURL! as NSURL
     }
 
     func showLoader() {
