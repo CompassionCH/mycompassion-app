@@ -9,8 +9,9 @@ import Capacitor
 import WebKit
 import Lottie
 import QuickLook
+import SafariServices
 
-class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreviewControllerDataSource {
+class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreviewControllerDataSource, SFSafariViewControllerDelegate {
 
     // Create native UI elements
     var loaderOverlay: UIVisualEffectView!
@@ -157,6 +158,45 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
         self.bridge?.webView?.configuration.userContentController.add(self, name: "nativeLoader")
         // Register the "nativePdf" listener for the QuickLook PDF preview
         self.bridge?.webView?.configuration.userContentController.add(self, name: "nativePdf")
+
+        // Intercept navigations to the PostFinance payment page and open them in
+        // SFSafariViewController instead of the in-app WebView (App Store Guideline
+        // 3.2.2: charitable donations must be collected outside the app's WebView).
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleNavigationAction(_:)),
+            name: .capacitorDecidePolicyForNavigationAction,
+            object: nil
+        )
+    }
+
+    // ---------------------------------------------------------
+    // PAYMENT FLOW (SFSafariViewController)
+    // ---------------------------------------------------------
+    @objc func handleNavigationAction(_ notification: Notification) {
+        guard let navigationAction = notification.object as? WKNavigationAction,
+              let url = navigationAction.request.url,
+              url.host?.contains("postfinance.ch") == true,
+              navigationAction.targetFrame?.isMainFrame != false
+        else { return }
+
+        DispatchQueue.main.async {
+            // Cancel the inline load that Capacitor allowed, keeping the app on
+            // the current page behind the payment sheet.
+            self.bridge?.webView?.stopLoading()
+
+            // Avoid stacking multiple sheets on redirects.
+            if self.presentedViewController is SFSafariViewController { return }
+
+            let safari = SFSafariViewController(url: url)
+            safari.delegate = self
+            self.present(safari, animated: true)
+        }
+    }
+
+    func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
+        // Refresh so the updated payment / invoice status is reflected.
+        self.bridge?.webView?.reload()
     }
 
     // ---------------------------------------------------------
