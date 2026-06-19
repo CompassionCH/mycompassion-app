@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -22,6 +23,10 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     private RelativeLayout loaderOverlay;
     private LottieAnimationView animationView;
+    // True while a PDF is being generated/downloaded, so the loader stays up
+    // for the whole (slow) download instead of being hidden by unrelated
+    // ajaxStop/pageshow events or the short generic failsafe.
+    private boolean pdfLoading = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,6 +44,7 @@ public class MainActivity extends BridgeActivity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
                 if (isPdfDownloadUrl(url)) {
+                    pdfLoading = true;
                     showLoader();
                     downloadPdfWithJs(view, url);
                     return true;
@@ -86,6 +92,23 @@ public class MainActivity extends BridgeActivity {
         });
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Persist cookies to disk so the session survives a force-close right
+        // after login (Android WebView otherwise only flushes periodically).
+        CookieManager.getInstance().flush();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Clear the loader if it was left showing after opening an external
+        // link in the browser (the in-app page never navigated, so nothing
+        // else would hide it).
+        hideLoader();
+    }
+
     // ---------------------------------------------------------
     // THE NATIVE LOTTIE LOADER
     // ---------------------------------------------------------
@@ -123,6 +146,10 @@ public class MainActivity extends BridgeActivity {
             if ("show".equals(command)) {
                 showLoader();
             } else if ("hide".equals(command)) {
+                // Ignore generic hides (ajaxStop / pageshow) while a PDF is loading.
+                if (!pdfLoading) hideLoader();
+            } else if ("pdfDone".equals(command)) {
+                pdfLoading = false;
                 hideLoader();
             } else if ("exit".equals(command)) {
                 // If Javascript tells us to exit, trigger the soft-close natively!
@@ -132,6 +159,15 @@ public class MainActivity extends BridgeActivity {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     startActivity(intent);
+                });
+            } else if (command.startsWith("pdf:")) {
+                // PDFs opened via window.open (e.g. letters) can't open a new
+                // window in the Android WebView, so download and open natively.
+                String url = command.substring(4);
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    pdfLoading = true;
+                    showLoader();
+                    downloadPdfWithJs(bridge.getWebView(), url);
                 });
             }
         }
@@ -145,8 +181,19 @@ public class MainActivity extends BridgeActivity {
 
             loaderOverlay.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
 
-            // Failsafe: auto-hide after 10 seconds
-            new Handler().postDelayed(this::hideLoader, 10000);
+            // Failsafe: auto-hide after 10 seconds (skipped during a PDF
+            // download, which stays up until the PDF actually opens).
+            new Handler().postDelayed(() -> {
+                if (!pdfLoading) hideLoader();
+            }, 10000);
+
+            // Backstop: if a PDF hasn't loaded within 30s, stop waiting.
+            new Handler().postDelayed(() -> {
+                if (pdfLoading) {
+                    pdfLoading = false;
+                    hideLoader();
+                }
+            }, 30000);
         });
     }
 
@@ -195,7 +242,7 @@ public class MainActivity extends BridgeActivity {
             "var FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;" +
             "var FO = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FileOpener;" +
             "if (!FS || !FO) {" +
-            "    if (window.nativeLoader) window.nativeLoader.postMessage('hide');" +
+            "    if (window.nativeLoader) window.nativeLoader.postMessage('pdfDone');" +
             "    return;" +
             "}" +
             "fetch('" + escapedUrl + "')" +
@@ -211,7 +258,7 @@ public class MainActivity extends BridgeActivity {
             "    .then(function(d) { return FS.writeFile({ path: '" + escapedFilename + "', data: d, directory: 'CACHE' }); })" +
             "    .then(function(f) { return FO.open({ filePath: f.uri, contentType: 'application/pdf' }); })" +
             "    .catch(function(e) { console.error('PDF download error:', e); alert('Could not open document. Please try again.'); })" +
-            "    .finally(function() { if (window.nativeLoader) window.nativeLoader.postMessage('hide'); });" +
+            "    .finally(function() { if (window.nativeLoader) window.nativeLoader.postMessage('pdfDone'); });" +
             "})();";
 
         view.evaluateJavascript(js, null);
@@ -228,7 +275,18 @@ public class MainActivity extends BridgeActivity {
                 "    let href = target.getAttribute('href');" +
                 "    let tgt = target.getAttribute('target');" +
                 "    if (target.hasAttribute('data-toggle') || !href || href.startsWith('#') || href.startsWith('javascript:')) return;" +
-                "    if (tgt === '_blank' || tgt === '_system') return;" +
+                "    if (tgt === '_blank' || tgt === '_system') {" +
+                // External links (e.g. the volunteer "Learn More" buttons) open in
+                // the real browser, with the loader as immediate tap feedback.
+                "        if (href.indexOf('http://') === 0 || href.indexOf('https://') === 0) {" +
+                "            e.preventDefault();" +
+                "            if (window.nativeLoader) {" +
+                "                window.nativeLoader.postMessage('show');" +
+                "                window.nativeLoader.postMessage('open:' + href);" +
+                "            }" +
+                "        }" +
+                "        return;" +
+                "    }" +
                 "    if (window.nativeLoader) window.nativeLoader.postMessage('show');" +
                 "});" +
 
@@ -276,10 +334,19 @@ public class MainActivity extends BridgeActivity {
                 "    window._systemOpenOverridden = true;" +
                 "    var _origOpen = window.open;" +
                 "    window.open = function(url, target, features) {" +
-                "        var isExternal = typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'));" +
-                "        var isExternalTarget = target === '_system' || target === '_blank';" +
-                "        if (isExternal && isExternalTarget) {" +
-                "            if (window.nativeLoader) { window.nativeLoader.postMessage('open:' + url); return null; }" +
+                "        if (typeof url === 'string') {" +
+                // PDFs (letters via /b2s_image, reports, downloads) can't open a
+                // new window in the Android WebView, so open them natively.
+                "            var isPdf = url.indexOf('file_type=pdf') !== -1 || /\\.pdf($|\\?)/i.test(url) || url.indexOf('/report/pdf/') !== -1 || url.indexOf('/my/download/') !== -1;" +
+                "            var abs = url.indexOf('http') === 0 ? url : (window.location.origin + url);" +
+                "            if (isPdf) {" +
+                "                if (window.nativeLoader) { window.nativeLoader.postMessage('pdf:' + abs); return null; }" +
+                "            }" +
+                "            var isExternal = url.startsWith('http://') || url.startsWith('https://');" +
+                "            var isExternalTarget = target === '_system' || target === '_blank';" +
+                "            if (isExternal && isExternalTarget) {" +
+                "                if (window.nativeLoader) { window.nativeLoader.postMessage('open:' + url); return null; }" +
+                "            }" +
                 "        }" +
                 "        return _origOpen.apply(this, arguments);" +
                 "    };" +
