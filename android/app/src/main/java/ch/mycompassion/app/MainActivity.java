@@ -337,7 +337,7 @@ public class MainActivity extends BridgeActivity {
                 "        if (typeof url === 'string') {" +
                 // PDFs (letters via /b2s_image, reports, downloads) can't open a
                 // new window in the Android WebView, so open them natively.
-                "            var isPdf = url.indexOf('file_type=pdf') !== -1 || /\\.pdf($|\\?)/i.test(url) || url.indexOf('/report/pdf/') !== -1 || url.indexOf('/my/download/') !== -1;" +
+                "            var isPdf = url.indexOf('file_type=pdf') !== -1 || /\\.pdf($|\\?)/i.test(url) || url.indexOf('/report/pdf/') !== -1 || url.indexOf('/preview_pdf') !== -1 || url.indexOf('/my/download/') !== -1;" +
                 "            var abs = url.indexOf('http') === 0 ? url : (window.location.origin + url);" +
                 "            if (isPdf) {" +
                 "                if (window.nativeLoader) { window.nativeLoader.postMessage('pdf:' + abs); return null; }" +

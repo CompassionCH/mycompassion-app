@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		014C485D2F767FB30008E358 /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 014C485C2F767FB30008E358 /* capacitor.config.json */; };
 		014C485F2F76A11A0008E358 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014C485E2F76A10F0008E358 /* ViewController.swift */; };
+		014FB0412FEE598000A6CBCE /* letter_photo_preview.js in Resources */ = {isa = PBXBuildFile; fileRef = 014FB03C2FEE598000A6CBCE /* letter_photo_preview.js */; };
+		014FB0422FEE598000A6CBCE /* login_guard.js in Resources */ = {isa = PBXBuildFile; fileRef = 014FB03E2FEE598000A6CBCE /* login_guard.js */; };
+		014FB0432FEE598000A6CBCE /* native_download.js in Resources */ = {isa = PBXBuildFile; fileRef = 014FB03F2FEE598000A6CBCE /* native_download.js */; };
+		014FB0442FEE598000A6CBCE /* loader.js in Resources */ = {isa = PBXBuildFile; fileRef = 014FB03D2FEE598000A6CBCE /* loader.js */; };
 		01556A1B2FC049B900E7A188 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 01556A1A2FC049B900E7A188 /* GoogleService-Info.plist */; };
 		0175F6972FB39FF500A89108 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 0175F6962FB39FF500A89108 /* Lottie */; };
 		0175F69B2FB3A39400A89108 /* loading.lottie in Resources */ = {isa = PBXBuildFile; fileRef = 0175F69A2FB3A39400A89108 /* loading.lottie */; };
@@ -25,6 +29,10 @@
 		014395202F7D4E5900B1B3AF /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		014C485C2F767FB30008E358 /* capacitor.config.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		014C485E2F76A10F0008E358 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		014FB03C2FEE598000A6CBCE /* letter_photo_preview.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = letter_photo_preview.js; sourceTree = "<group>"; };
+		014FB03D2FEE598000A6CBCE /* loader.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = loader.js; sourceTree = "<group>"; };
+		014FB03E2FEE598000A6CBCE /* login_guard.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = login_guard.js; sourceTree = "<group>"; };
+		014FB03F2FEE598000A6CBCE /* native_download.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = native_download.js; sourceTree = "<group>"; };
 		01556A1A2FC049B900E7A188 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		0175F69A2FB3A39400A89108 /* loading.lottie */ = {isa = PBXFileReference; lastKnownFileType = file; path = loading.lottie; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
@@ -51,6 +59,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		014FB0402FEE598000A6CBCE /* Scripts */ = {
+			isa = PBXGroup;
+			children = (
+				014FB03C2FEE598000A6CBCE /* letter_photo_preview.js */,
+				014FB03D2FEE598000A6CBCE /* loader.js */,
+				014FB03E2FEE598000A6CBCE /* login_guard.js */,
+				014FB03F2FEE598000A6CBCE /* native_download.js */,
+			);
+			path = Scripts;
+			sourceTree = "<group>";
+		};
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
@@ -83,6 +102,7 @@
 				50B271D01FEDC1A000F3C39B /* public */,
 				0175F69A2FB3A39400A89108 /* loading.lottie */,
 				01556A1A2FC049B900E7A188 /* GoogleService-Info.plist */,
+				014FB0402FEE598000A6CBCE /* Scripts */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -160,6 +180,10 @@
 				50B271D11FEDC1A000F3C39B /* public in Resources */,
 				504EC30F1FED79650016851F /* Assets.xcassets in Resources */,
 				014C485D2F767FB30008E358 /* capacitor.config.json in Resources */,
+				014FB0412FEE598000A6CBCE /* letter_photo_preview.js in Resources */,
+				014FB0422FEE598000A6CBCE /* login_guard.js in Resources */,
+				014FB0432FEE598000A6CBCE /* native_download.js in Resources */,
+				014FB0442FEE598000A6CBCE /* loader.js in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 			);
