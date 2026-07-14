@@ -43,10 +43,10 @@ public class MainActivity extends BridgeActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                if (isPdfDownloadUrl(url)) {
+                if (isPdfDownloadUrl(url) || isImageDownloadUrl(url)) {
                     pdfLoading = true;
                     showLoader();
-                    downloadPdfWithJs(view, url);
+                    downloadFileWithJs(view, url);
                     return true;
                 }
                 return super.shouldOverrideUrlLoading(view, request);
@@ -167,7 +167,7 @@ public class MainActivity extends BridgeActivity {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     pdfLoading = true;
                     showLoader();
-                    downloadPdfWithJs(bridge.getWebView(), url);
+                    downloadFileWithJs(bridge.getWebView(), url);
                 });
             }
         }
@@ -228,15 +228,37 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    private void downloadPdfWithJs(WebView view, String url) {
+    private boolean isImageDownloadUrl(String url) {
+        // Timeline child photos are <a href="/web/image/compassion.child.pictures/<id>/fullshot/">
+        // links (a full navigation, not window.open), which the WebView would
+        // otherwise render as a raw, chrome-less image. Open them natively.
+        try {
+            String path = Uri.parse(url).getPath();
+            return path != null && path.contains("/web/image/compassion.child.pictures/");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void downloadFileWithJs(WebView view, String url) {
+        // Derive a base filename (no extension) from the URL path; the actual
+        // extension + content type are chosen at runtime from the response's
+        // MIME type, so this handles both PDFs (letters, reports, downloads)
+        // and images (timeline child photos).
         String path = Uri.parse(url).getPath();
-        String lastSegment = (path != null && path.contains("/"))
-                ? path.substring(path.lastIndexOf('/') + 1)
-                : "document";
-        String filename = (lastSegment.isEmpty() ? "document" : lastSegment) + ".pdf";
+        String base = "document";
+        if (path != null) {
+            String p = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+            int slash = p.lastIndexOf('/');
+            String seg = slash >= 0 ? p.substring(slash + 1) : p;
+            if (!seg.isEmpty()) {
+                int dot = seg.lastIndexOf('.');
+                base = dot > 0 ? seg.substring(0, dot) : seg;
+            }
+        }
 
         String escapedUrl = url.replace("\\", "\\\\").replace("'", "\\'");
-        String escapedFilename = filename.replace("\\", "\\\\").replace("'", "\\'");
+        String escapedBase = base.replace("\\", "\\\\").replace("'", "\\'");
 
         String js = "(function() {" +
             "var FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;" +
@@ -248,16 +270,21 @@ public class MainActivity extends BridgeActivity {
             "fetch('" + escapedUrl + "')" +
             "    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })" +
             "    .then(function(b) {" +
+            "        var ext, ct;" +
+            "        if (b.type === 'image/jpeg') { ext = 'jpg'; ct = 'image/jpeg'; }" +
+            "        else if (b.type === 'image/png') { ext = 'png'; ct = 'image/png'; }" +
+            "        else { ext = 'pdf'; ct = 'application/pdf'; }" +
+            "        var fname = '" + escapedBase + "' + '.' + ext;" +
             "        return new Promise(function(res, rej) {" +
             "            var rd = new FileReader();" +
             "            rd.onloadend = function() { res(rd.result.split(',')[1]); };" +
             "            rd.onerror = rej;" +
             "            rd.readAsDataURL(b);" +
-            "        });" +
+            "        })" +
+            "        .then(function(d) { return FS.writeFile({ path: fname, data: d, directory: 'CACHE' }); })" +
+            "        .then(function(f) { return FO.open({ filePath: f.uri, contentType: ct }); });" +
             "    })" +
-            "    .then(function(d) { return FS.writeFile({ path: '" + escapedFilename + "', data: d, directory: 'CACHE' }); })" +
-            "    .then(function(f) { return FO.open({ filePath: f.uri, contentType: 'application/pdf' }); })" +
-            "    .catch(function(e) { console.error('PDF download error:', e); alert('Could not open document. Please try again.'); })" +
+            "    .catch(function(e) { console.error('File download error:', e); alert('Could not open document. Please try again.'); })" +
             "    .finally(function() { if (window.nativeLoader) window.nativeLoader.postMessage('pdfDone'); });" +
             "})();";
 
