@@ -11,12 +11,17 @@ import Lottie
 import QuickLook
 import SafariServices
 
-class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreviewControllerDataSource, SFSafariViewControllerDelegate {
+class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreviewControllerDataSource, SFSafariViewControllerDelegate, WKNavigationDelegate {
 
     // Create native UI elements
     var loaderOverlay: UIVisualEffectView!
     var animationView: LottieAnimationView!
     var previewFileURL: URL?
+
+    // Capacitor installs its own WKNavigationDelegate; we insert ourselves in
+    // front of it (see viewDidLoad) to show the maintenance page on load
+    // failures, and forward everything else back to Capacitor.
+    private weak var capacitorNavDelegate: WKNavigationDelegate?
 
     // JavaScript injected into the Odoo WebView, one file per concern, kept in
     // the Scripts/ group and loaded at runtime so they can be edited and
@@ -40,6 +45,14 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
         let js = ViewController.loadInjectedScripts()
         let script = WKUserScript(source: js, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
         self.bridge?.webView?.configuration.userContentController.addUserScript(script)
+
+        // Insert ourselves as the navigation delegate, keeping Capacitor's as
+        // the fallback. WKNavigationDelegate calls we don't implement are
+        // forwarded to it via forwardingTarget(for:) below.
+        if let webView = self.bridge?.webView {
+            capacitorNavDelegate = webView.navigationDelegate
+            webView.navigationDelegate = self
+        }
 
         // Register the "nativeLoader" listener so Swift can hear the JS
         self.bridge?.webView?.configuration.userContentController.add(self, name: "nativeLoader")
@@ -159,6 +172,7 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
         if message.name == "nativeLoader", let command = message.body as? String {
             if command == "show" { showLoader() }
             else if command == "hide" { hideLoader() }
+            else if command == "reload" { reloadApp() }
         } else if message.name == "nativePreview", let filePath = message.body as? String {
             presentFilePreview(filePath)
         }
@@ -206,6 +220,74 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
             self.loaderOverlay.isHidden = true
             self.animationView.stop()
         }
+    }
+
+    // ---------------------------------------------------------
+    // MAINTENANCE / OFFLINE SCREEN
+    // ---------------------------------------------------------
+    // Forward every WKNavigationDelegate/WKUIDelegate method we don't implement
+    // ourselves back to Capacitor's handler, so its bridge, allowNavigation and
+    // PostFinance handling keep working untouched.
+    override func responds(to aSelector: Selector!) -> Bool {
+        if super.responds(to: aSelector) { return true }
+        return capacitorNavDelegate?.responds(to: aSelector) ?? false
+    }
+
+    override func forwardingTarget(for aSelector: Selector!) -> Any? {
+        if let delegate = capacitorNavDelegate, delegate.responds(to: aSelector) {
+            return delegate
+        }
+        return super.forwardingTarget(for: aSelector)
+    }
+
+    // A provisional-navigation cancel (code -999) is not a failure: it's what
+    // the PostFinance handler triggers with stopLoading(), so ignore it.
+    private func isCancelled(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
+    }
+
+    private func showMaintenance() {
+        guard let webView = self.bridge?.webView,
+              let errorURL = self.bridge?.config.errorPathURL else { return }
+        DispatchQueue.main.async {
+            self.hideLoader()
+            webView.load(URLRequest(url: errorURL))
+        }
+    }
+
+    private func reloadApp() {
+        guard let webView = self.bridge?.webView,
+              let serverURL = self.bridge?.config.appStartServerURL else { return }
+        DispatchQueue.main.async {
+            self.showLoader()
+            webView.load(URLRequest(url: serverURL))
+        }
+    }
+
+    // Backend unreachable (connection refused / timeout / DNS) — e.g. Odoo down
+    // during a maintenance restart.
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        if isCancelled(error) { return }
+        showMaintenance()
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        if isCancelled(error) { return }
+        showMaintenance()
+    }
+
+    // Reverse proxy up but Odoo restarting → 5xx (e.g. nginx 502) on the main
+    // frame. Capacitor doesn't implement this method, so we own it fully.
+    func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+        if navigationResponse.isForMainFrame,
+           let httpResponse = navigationResponse.response as? HTTPURLResponse,
+           httpResponse.statusCode >= 500 {
+            decisionHandler(.cancel)
+            showMaintenance()
+            return
+        }
+        decisionHandler(.allow)
     }
 
     // ---------------------------------------------------------

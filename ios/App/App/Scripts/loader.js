@@ -25,21 +25,28 @@ function hideCapacitorSplash() {
     }
 }
 
-// Wait for Odoo's #wrapwrap, then hide Capacitor
-const observer = new MutationObserver((mutations, obs) => {
-    if (document.getElementById("wrapwrap")) {
-        hideCapacitorSplash();
-        hideNativeLoader(); // Just in case
-        obs.disconnect();
-    }
-});
-
-if (document.getElementById("wrapwrap")) {
+// Reveal the app once its shell is present. Normally that's Odoo's #wrapwrap,
+// but a logged-out launch lands on /web/login, which has no #wrapwrap — detect
+// the login form too, or the splash stays stuck (T3304).
+function appShellReady() {
+    return !!(document.getElementById("wrapwrap")
+        || document.querySelector(".oe_login_form, form[action^='/web/login'], input[name='login']"));
+}
+function revealApp() {
     hideCapacitorSplash();
     hideNativeLoader();
+}
+const observer = new MutationObserver((mutations, obs) => {
+    if (appShellReady()) { revealApp(); obs.disconnect(); }
+});
+
+if (appShellReady()) {
+    revealApp();
 } else {
-    // Watch the DOM until Odoo actually loads
     observer.observe(document.body, { childList: true, subtree: true });
+    // Last-resort failsafe: never leave the splash up indefinitely on an
+    // unrecognised page.
+    setTimeout(function () { observer.disconnect(); revealApp(); }, 8000);
 }
 
 // Hide Lottie Loader on AJAX stop or Page Show

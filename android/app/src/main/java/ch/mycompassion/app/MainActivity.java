@@ -7,8 +7,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
+import com.getcapacitor.PluginHandle;
+import com.capacitorjs.plugins.splashscreen.SplashScreen;
+import com.capacitorjs.plugins.splashscreen.SplashScreenSettings;
+import java.lang.reflect.Field;
 import android.widget.RelativeLayout;
 import android.graphics.Color;
 import android.os.Handler;
@@ -57,6 +63,30 @@ public class MainActivity extends BridgeActivity {
                 super.onPageFinished(view, url);
                 injectJavascriptObserver(view);
                 hideLoader();
+            }
+
+            // Backend unreachable on a COLD start (no connection at launch):
+            // Capacitor (super) loads the local maintenance page, but that page
+            // is served from the local origin where window.Capacitor is absent
+            // (server.url is remote), so it can't hide the launch splash itself.
+            // Hide it natively here, or the app is stuck on the splash. (Mid-
+            // session failures already work: the splash was hidden long ago.)
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request.isForMainFrame()) {
+                    forceHideCapacitorSplash();
+                    hideLoader();
+                }
+            }
+
+            @Override
+            public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
+                super.onReceivedHttpError(view, request, errorResponse);
+                if (request.isForMainFrame() && errorResponse.getStatusCode() >= 500) {
+                    forceHideCapacitorSplash();
+                    hideLoader();
+                }
             }
         });
 
@@ -151,6 +181,12 @@ public class MainActivity extends BridgeActivity {
             } else if ("pdfDone".equals(command)) {
                 pdfLoading = false;
                 hideLoader();
+            } else if ("reload".equals(command)) {
+                // Sent from the maintenance error page: re-open the remote app URL.
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    showLoader();
+                    bridge.getWebView().loadUrl(bridge.getServerUrl());
+                });
             } else if ("exit".equals(command)) {
                 // If Javascript tells us to exit, trigger the soft-close natively!
                 new Handler(Looper.getMainLooper()).post(() -> moveTaskToBack(true));
@@ -212,6 +248,29 @@ public class MainActivity extends BridgeActivity {
                             animationView.cancelAnimation();
                         })
                         .start();
+            }
+        });
+    }
+
+    // Hide the Capacitor launch splash from native code. Used on the error path
+    // (see onReceivedError): the maintenance page can't hide it via JS because
+    // window.Capacitor isn't present on the local error origin. The plugin has
+    // no native hide API, so we reach its SplashScreen via reflection — guarded
+    // so a Capacitor upgrade can only turn this into a no-op, never a crash.
+    // usingDialog is false in this app, so hide(settings) is the correct call.
+    private void forceHideCapacitorSplash() {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                PluginHandle handle = this.bridge.getPlugin("SplashScreen");
+                if (handle == null || handle.getInstance() == null) return;
+                Field field = handle.getInstance().getClass().getDeclaredField("splashScreen");
+                field.setAccessible(true);
+                SplashScreen splash = (SplashScreen) field.get(handle.getInstance());
+                if (splash != null) {
+                    splash.hide(new SplashScreenSettings());
+                }
+            } catch (Throwable t) {
+                // Plugin internals changed or unavailable — safe no-op.
             }
         });
     }
@@ -341,20 +400,24 @@ public class MainActivity extends BridgeActivity {
                 "    } catch(e) {}" +
                 "}" +
 
+                // Reveal once the app shell is present. Normally Odoo's #wrapwrap,
+                // but a logged-out launch lands on /web/login (no #wrapwrap) —
+                // detect the login form too, or the splash stays stuck (T3304).
+                "function appShellReady() {" +
+                "    return !!(document.getElementById('wrapwrap')" +
+                "        || document.querySelector(\".oe_login_form, form[action^='/web/login'], input[name='login']\"));" +
+                "}" +
+                "function revealApp() { hideCapacitorSplash(); hideNativeLoader(); }" +
                 "const observer = new MutationObserver((mutations, obs) => {" +
-                "   if (document.getElementById('wrapwrap')) {" +
-                "       hideCapacitorSplash();" +
-                "       hideNativeLoader();" +
-                "   } else {" +
-                "       observer.observe(document.documentElement, { childList: true, subtree: true });" + // <-- CHANGED HERE
-                "   }" +
+                "   if (appShellReady()) { revealApp(); obs.disconnect(); }" +
                 "});" +
 
-                "if (document.getElementById('wrapwrap')) {" +
-                "    hideCapacitorSplash();" +
-                "    hideNativeLoader();" +
+                "if (appShellReady()) {" +
+                "    revealApp();" +
                 "} else {" +
                 "    observer.observe(document.body, { childList: true, subtree: true });" +
+                // Last-resort failsafe: never leave the splash up indefinitely.
+                "    setTimeout(function () { observer.disconnect(); revealApp(); }, 8000);" +
                 "}" +
 
                 "if (!window._systemOpenOverridden) {" +

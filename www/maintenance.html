@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>MyCompassion</title>
+  <style>
+    :root { --blue: #2a5eec; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--blue);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px calc(24px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
+      text-align: center;
+    }
+    .card { max-width: 340px; width: 100%; }
+    .logo { width: 64px; height: auto; margin: 0 auto 28px; display: block; }
+    h1 { font-size: 22px; line-height: 1.3; margin: 0 0 12px; }
+    p { font-size: 16px; line-height: 1.5; color: rgba(255,255,255,0.9); margin: 0 0 32px; }
+    #retry {
+      -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      background: #fff; color: var(--blue); font-size: 17px; font-weight: 600;
+      padding: 15px 28px; border-radius: 12px; width: 100%; max-width: 260px;
+      transition: opacity .15s ease;
+    }
+    #retry:active { opacity: .8; }
+    #retry:disabled { opacity: .5; }
+    .langs { margin-top: 28px; display: flex; gap: 8px; justify-content: center; }
+    .langs button {
+      -webkit-appearance: none; appearance: none; cursor: pointer;
+      background: transparent; border: 1px solid rgba(255,255,255,0.45);
+      color: #fff; font-size: 13px; font-weight: 600; letter-spacing: .03em;
+      padding: 6px 0; border-radius: 999px; width: 46px;
+      opacity: .75; transition: opacity .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .langs button.active { background: rgba(255,255,255,0.18); border-color: #fff; opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <!-- Logo inlined (not referenced): Capacitor's Android local server serves
+         .svg without the image/svg+xml MIME, so <img src=".svg"> won't render on
+         Android. Inlining also keeps this error page fully self-contained/offline.
+         White mark only (no background rect) so it sits cleanly on the blue page. -->
+    <svg class="logo" viewBox="0 0 71 82" xmlns="http://www.w3.org/2000/svg" aria-label="MyCompassion">
+      <g transform="matrix(0.885714,0,0,0.950824,5.011429,3.997986)" fill="#fff">
+        <path d="M28.6,34.2C22.8,37.4 18.2,42.4 15.3,48.4C13.1,52.8 11.4,57.6 10.4,62.4C9.9,64.9 9.5,67.4 9.4,69.9L10.7,68C10.2,70.7 10,73.5 10,76.3L11.3,74.1L11.2,81.3L14.2,74.1C14.3,74.8 14.5,75.5 14.8,76.2C16.6,71.9 18.2,68.5 19.7,65.7L24,57.9C25.4,55.6 26.9,53.5 28.6,51.4C30.1,49.4 32,47.2 34.4,44.8C35.4,44.1 36.4,43.5 37.5,43L41.5,41.8L47.1,40.5L53,39C56.9,38 60.7,36.6 64.2,34.6C67.6,32.5 69.7,30 70.1,27.2C66.8,27.9 63.4,28.4 60.1,28.7L51.8,28.8C49.3,28.7 46.8,28.8 44.3,29.1C41.6,29.4 38.9,30 36.3,30.9C33.6,31.7 31.1,32.8 28.6,34.2Z"/>
+        <path d="M13.9,39.4L12.4,41.6C14.4,40 16.5,38.7 18.7,37.6L33.7,30C39.8,26.8 44.9,22 48.5,16.1C49.8,14.2 50.9,12.1 51.7,9.9C52.2,8.8 52.5,7.8 52.9,6.7C53,6 53,5.4 53,4.7C53,3.8 53,2.9 52.9,2C52.9,1.3 52.7,0.7 52.3,0.1C52,-0.2 51.6,0 51.3,0.5C48.4,4.4 45.1,8.1 41.4,11.3C37.2,14.8 32.6,17.8 27.7,20.3C22.2,22.9 17,26.2 12.2,30C8,33.5 4.2,37.6 1.1,42.1C0.6,42.9 0.2,43.8 0.1,44.8C0.7,44.5 1.4,44.4 2,44.5L0.8,46.9L2.7,45.3C3.2,44.8 3.8,44.4 4.5,44.3L4,45.9C5.5,44.5 7.1,43.2 8.9,42.2L8.2,43.8L10.9,41.4C10.8,41.5 13.9,39.4 13.9,39.4Z"/>
+        <path d="M14.5,4.7C13.7,5.7 13.2,6.8 13,8C12.7,9.3 12.7,10.6 13,11.8C13.3,13 13.8,14.2 14.6,15.2C15.4,16.2 16.4,17.1 17.6,17.7C18.8,18.3 20,18.8 21.3,19.2C22.7,19.5 24.2,19.5 25.6,19.2C27,18.9 28.3,18.4 29.4,17.7C30.5,17 31.5,16.1 32.4,15.2C33.1,14.2 33.6,13.1 33.9,12C34.2,10.8 34.2,9.5 33.9,8.3C33.6,7 33,5.7 32.2,4.7C31.4,3.7 30.4,2.8 29.2,2.2C28.1,1.5 26.8,1 25.5,0.7C24.1,0.4 22.6,0.4 21.2,0.7C19.8,0.9 18.5,1.4 17.4,2.2C16.3,2.8 15.3,3.7 14.5,4.7Z"/>
+      </g>
+    </svg>
+    <h1 id="title"></h1>
+    <p id="message"></p>
+    <button id="retry" type="button"></button>
+    <nav class="langs" id="langs">
+      <button type="button" data-lang="de">DE</button>
+      <button type="button" data-lang="fr">FR</button>
+      <button type="button" data-lang="it">IT</button>
+      <button type="button" data-lang="en">EN</button>
+    </nav>
+  </div>
+
+  <script>
+    var STRINGS = {
+      de: {
+        title: "Wir sind gleich zurück",
+        message: "MyCompassion macht eine kurze Pause, während wir einige Verbesserungen vornehmen. Bitte schau in ein paar Minuten wieder vorbei – wir sind bald wieder online. Danke für deine Geduld!",
+        retry: "Erneut versuchen"
+      },
+      fr: {
+        title: "Nous revenons très vite",
+        message: "MyCompassion fait une courte pause pendant que nous apportons quelques améliorations. Reviens dans quelques minutes – nous serons bientôt de nouveau en ligne. Merci de ta patience !",
+        retry: "Réessayer"
+      },
+      it: {
+        title: "Torniamo subito",
+        message: "MyCompassion si prende una breve pausa mentre apportiamo alcuni miglioramenti. Torna tra qualche minuto – saremo presto di nuovo online. Grazie per la tua pazienza!",
+        retry: "Riprova"
+      },
+      en: {
+        title: "We'll be right back",
+        message: "MyCompassion is taking a short break while we make a few improvements. Please check back in a few minutes – we'll be online again soon. Thank you for your patience!",
+        retry: "Try again"
+      }
+    };
+
+    // Default language: a previous manual choice (persisted) wins, otherwise the
+    // device locale, otherwise German. The stored choice survives the auto-reloads.
+    var stored = null;
+    try { stored = localStorage.getItem("mc_maintenance_lang"); } catch (e) {}
+    var navLang = (navigator.language || "de").slice(0, 2).toLowerCase();
+    var lang = STRINGS[stored] ? stored : (STRINGS[navLang] ? navLang : "de");
+
+    function render(l) {
+      var t = STRINGS[l] || STRINGS.de;
+      document.documentElement.lang = l;
+      document.getElementById("title").textContent = t.title;
+      document.getElementById("message").textContent = t.message;
+      document.getElementById("retry").textContent = t.retry;
+      document.querySelectorAll("#langs button").forEach(function (b) {
+        b.classList.toggle("active", b.getAttribute("data-lang") === l);
+      });
+    }
+
+    document.querySelectorAll("#langs button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        lang = b.getAttribute("data-lang");
+        try { localStorage.setItem("mc_maintenance_lang", lang); } catch (e) {}
+        render(lang);
+      });
+    });
+
+    render(lang);
+
+    // Talk to the native shell. Android exposes window.nativeLoader; iOS exposes
+    // window.webkit.messageHandlers.nativeLoader. Fall back to a plain web reload.
+    function nativeSend(command) {
+      try {
+        if (window.nativeLoader && typeof window.nativeLoader.postMessage === "function") {
+          window.nativeLoader.postMessage(command); return true;
+        }
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.nativeLoader) {
+          window.webkit.messageHandlers.nativeLoader.postMessage(command); return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    // Dismiss the native loading overlay that was covering the failed load.
+    nativeSend("hide");
+
+    // Also dismiss the Capacitor launch splash. loader.js only hides it once
+    // Odoo's #wrapwrap appears, which never happens on this error page — so
+    // without this the splash would stay stuck over the maintenance screen.
+    function hideCapacitorSplash() {
+      try {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SplashScreen) {
+          window.Capacitor.Plugins.SplashScreen.hide();
+        } else if (window.Capacitor) {
+          window.Capacitor.triggerPluginCall("SplashScreen", "hide");
+        }
+      } catch (e) {}
+    }
+    hideCapacitorSplash();
+
+    function reload() {
+      // "reload" tells the shell to re-open the remote app URL. If there is no
+      // shell (plain browser), just reload this page.
+      if (!nativeSend("reload")) { window.location.reload(); }
+    }
+
+    document.getElementById("retry").addEventListener("click", reload);
+
+    // Self-heal: quietly retry every 30s so the app comes back on its own once
+    // maintenance is over, even if the user just leaves the screen open.
+    setInterval(reload, 30000);
+  </script>
+</body>
+</html>
