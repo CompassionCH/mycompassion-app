@@ -1,5 +1,6 @@
 package ch.mycompassion.app;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -49,6 +50,13 @@ public class MainActivity extends BridgeActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
+                if (request.isForMainFrame() && isPaymentGatewayUrl(url)) {
+                    if (openInBrowser(url)) {
+                        return true;
+                    }
+                    // No browser on the device: better to pay in the WebView
+                    // than to go nowhere.
+                }
                 if (isPdfDownloadUrl(url) || isImageDownloadUrl(url)) {
                     pdfLoading = true;
                     showLoader();
@@ -273,6 +281,33 @@ public class MainActivity extends BridgeActivity {
                 // Plugin internals changed or unavailable — safe no-op.
             }
         });
+    }
+
+    // ---------------------------------------------------------
+    // PAYMENT FLOW
+    // ---------------------------------------------------------
+    private boolean isPaymentGatewayUrl(String url) {
+        // The gateway hops out to TWINT and banking apps and comes back to
+        // whichever browser started it, which leaves the WebView stranded on a
+        // payment page that never resolves - the donor sees no confirmation and
+        // pays a second time (T3378). Hand the whole payment to the browser; the
+        // app reads the outcome from /my2/payment/status when it regains focus.
+        // iOS does the same, in an SFSafariViewController sheet.
+        try {
+            String host = Uri.parse(url).getHost();
+            return host != null && (host.equals("postfinance.ch") || host.endsWith(".postfinance.ch"));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean openInBrowser(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            return true;
+        } catch (ActivityNotFoundException e) {
+            return false;
+        }
     }
 
     // ---------------------------------------------------------
