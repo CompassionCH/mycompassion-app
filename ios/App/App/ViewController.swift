@@ -62,13 +62,13 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
         // payment sheet once it knows the payment settled.
         self.bridge?.webView?.configuration.userContentController.add(self, name: "nativePayment")
 
-        // Intercept navigations to the PostFinance payment page and open them in
-        // SFSafariViewController instead of the in-app WebView (App Store Guideline
-        // 3.2.2: charitable donations must be collected outside the app's WebView).
+        // WebKit suspends the WebView's timers while the sheet covers it, so a
+        // mycompassion:// call from the payment browser is the only signal that
+        // can reach us while the donor is still on the gateway page (T3378).
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(handleNavigationAction(_:)),
-            name: .capacitorDecidePolicyForNavigationAction,
+            selector: #selector(handleAppReturnURL(_:)),
+            name: .capacitorOpenURL,
             object: nil
         )
     }
@@ -99,42 +99,71 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
     // ---------------------------------------------------------
     // PAYMENT FLOW (SFSafariViewController)
     // ---------------------------------------------------------
-    @objc func handleNavigationAction(_ notification: Notification) {
-        guard let navigationAction = notification.object as? WKNavigationAction,
-              let url = navigationAction.request.url,
-              url.host?.contains("postfinance.ch") == true,
-              navigationAction.targetFrame?.isMainFrame != false
-        else { return }
-
-        DispatchQueue.main.async {
-            // Cancel the inline load that Capacitor allowed, keeping the app on
-            // the current page behind the payment sheet.
-            self.bridge?.webView?.stopLoading()
-
-            // Avoid stacking multiple sheets on redirects.
-            if self.presentedViewController is SFSafariViewController { return }
-
-            let safari = SFSafariViewController(url: url)
-            safari.delegate = self
-            self.present(safari, animated: true)
+    // Donations are collected outside the app's WebView (Guideline 3.2.2).
+    // Cancelling here rather than calling stopLoading() afterwards keeps the
+    // WebView from reporting a failed navigation, which used to race the
+    // maintenance page onto the screen behind the sheet (T3378).
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        if let url = navigationAction.request.url,
+           url.host?.contains("postfinance.ch") == true,
+           navigationAction.targetFrame?.isMainFrame != false {
+            decisionHandler(.cancel)
+            presentPaymentSheet(url)
+            return
+        }
+        guard let delegate = capacitorNavDelegate else {
+            decisionHandler(.allow)
+            return
+        }
+        if case .none = delegate.webView?(
+            webView, decidePolicyFor: navigationAction, decisionHandler: decisionHandler
+        ) {
+            decisionHandler(.allow)
         }
     }
 
-    /// SFSafariViewController can only be dismissed by the app that presented it,
-    /// and it reports nothing about where it navigated - so the donor was left
-    /// closing the sheet by hand after paying (T3378). The page behind it polls
-    /// /my2/payment/status and calls this once the payment settled. No reload
-    /// here: that page is already on its way to the thank-you screen.
+    private func presentPaymentSheet(_ url: URL) {
+        // Avoid stacking sheets on gateway redirects.
+        if presentedViewController is SFSafariViewController { return }
+        let safari = SFSafariViewController(url: url)
+        safari.delegate = self
+        present(safari, animated: true)
+    }
+
+    /// The confirmation page opens mycompassion:// on success only, so a failed
+    /// payment stays on screen to be read.
+    @objc func handleAppReturnURL(_ notification: Notification) {
+        guard let payload = notification.object as? [String: Any],
+              let url = payload["url"] as? URL,
+              url.scheme == "mycompassion"
+        else { return }
+        dismissPaymentSheet()
+    }
+
+    /// Only the app can dismiss the sheet it presented (T3378). The poller was
+    /// suspended behind it and decides where to go next, so wake it after.
     func dismissPaymentSheet() {
         DispatchQueue.main.async {
             guard self.presentedViewController is SFSafariViewController else { return }
-            self.dismiss(animated: true)
+            self.dismiss(animated: true) {
+                self.resumePaymentPolling()
+            }
         }
     }
 
+    private func resumePaymentPolling() {
+        self.bridge?.webView?.evaluateJavaScript(
+            "window.my2ResumePaymentPolling && window.my2ResumePaymentPolling()"
+        )
+    }
+
     func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
-        // Refresh so the updated payment / invoice status is reflected.
-        self.bridge?.webView?.reload()
+        // Closed by hand, so the scheme never fired.
+        resumePaymentPolling()
     }
 
     // ---------------------------------------------------------
@@ -257,15 +286,20 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
         return super.forwardingTarget(for: aSelector)
     }
 
-    // A provisional-navigation cancel (code -999) is not a failure: it's what
-    // the PostFinance handler triggers with stopLoading(), so ignore it.
+    // A navigation stopped on purpose is not a backend failure.
     private func isCancelled(_ error: Error) -> Bool {
         let nsError = error as NSError
-        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
+        if nsError.domain == NSURLErrorDomain, nsError.code == NSURLErrorCancelled {
+            return true
+        }
+        return nsError.domain == "WebKitErrorDomain" && [101, 102, 204].contains(nsError.code)
     }
 
     private func showMaintenance() {
-        guard let webView = self.bridge?.webView,
+        // Never behind a sheet: the donor cannot see it and the page underneath
+        // is still intact.
+        guard presentedViewController == nil,
+              let webView = self.bridge?.webView,
               let errorURL = self.bridge?.config.errorPathURL else { return }
         DispatchQueue.main.async {
             self.hideLoader()
@@ -285,12 +319,16 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
     // Backend unreachable (connection refused / timeout / DNS) — e.g. Odoo down
     // during a maintenance restart.
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        if isCancelled(error) { return }
-        showMaintenance()
+        handleLoadFailure(error)
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        handleLoadFailure(error)
+    }
+
+    private func handleLoadFailure(_ error: Error) {
         if isCancelled(error) { return }
+        print("⚡️  MyCompassion: load failed, showing maintenance - \(error as NSError)")
         showMaintenance()
     }
 
