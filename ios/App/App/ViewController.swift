@@ -58,6 +58,9 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
         self.bridge?.webView?.configuration.userContentController.add(self, name: "nativeLoader")
         // Register the "nativePreview" listener for the QuickLook file preview
         self.bridge?.webView?.configuration.userContentController.add(self, name: "nativePreview")
+        // Register the "nativePayment" listener so the page can close the
+        // payment sheet once it knows the payment settled.
+        self.bridge?.webView?.configuration.userContentController.add(self, name: "nativePayment")
 
         // Intercept navigations to the PostFinance payment page and open them in
         // SFSafariViewController instead of the in-app WebView (App Store Guideline
@@ -114,6 +117,18 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
             let safari = SFSafariViewController(url: url)
             safari.delegate = self
             self.present(safari, animated: true)
+        }
+    }
+
+    /// SFSafariViewController can only be dismissed by the app that presented it,
+    /// and it reports nothing about where it navigated - so the donor was left
+    /// closing the sheet by hand after paying (T3378). The page behind it polls
+    /// /my2/payment/status and calls this once the payment settled. No reload
+    /// here: that page is already on its way to the thank-you screen.
+    func dismissPaymentSheet() {
+        DispatchQueue.main.async {
+            guard self.presentedViewController is SFSafariViewController else { return }
+            self.dismiss(animated: true)
         }
     }
 
@@ -175,6 +190,8 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
             else if command == "reload" { reloadApp() }
         } else if message.name == "nativePreview", let filePath = message.body as? String {
             presentFilePreview(filePath)
+        } else if message.name == "nativePayment", let command = message.body as? String {
+            if command == "close" { dismissPaymentSheet() }
         }
     }
 
