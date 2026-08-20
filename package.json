@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "sync:dev": "cp capacitor.config.dev.ts capacitor.config.ts && npx cap sync ios",
-    "sync:prod": "cp capacitor.config.prod.ts capacitor.config.ts && npx cap sync ios",
+    "sync:dev": "cp capacitor.config.dev.ts capacitor.config.ts && cp ios/App/App/GoogleService-Info.dev.plist ios/App/App/GoogleService-Info.plist && npx cap sync ios",
+    "sync:prod": "cp capacitor.config.prod.ts capacitor.config.ts && cp ios/App/App/GoogleService-Info.prod.plist ios/App/App/GoogleService-Info.plist && npx cap sync ios",
     "sync:dev-android": "cp capacitor.config.dev.ts capacitor.config.ts && npx cap sync android",
-    "sync:prod-android": "cp capacitor.config.prod.ts capacitor.config.ts && npx cap sync android"
+    "sync:prod-android": "cp capacitor.config.prod.ts capacitor.config.ts && npx cap sync android",
+    "build:stage-android": "npm run sync:dev-android && cd android && ./gradlew assembleStageRelease",
+    "build:prod-android": "npm run sync:prod-android && cd android && ./gradlew assembleProdRelease"
   },
   "keywords": [],
   "author": "",

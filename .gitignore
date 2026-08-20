@@ -30,3 +30,5 @@ ios/App/App/GoogleService-Info.prod.plist
 android-configs
 android/.idea
 android/.kotlin
+capacitor.config.ts
+ios/App/App/GoogleService-Info.plist

@@ -7,6 +7,7 @@ const config: CapacitorConfig = {
   bundledWebRuntime: false,
   "server": {
     "url": "https://mycompassion.ch/web/login",
+    "errorPath": "maintenance.html",
     "cleartext": false,
     "allowNavigation": [
         "mycompassion.ch",

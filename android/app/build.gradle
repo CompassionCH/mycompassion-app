@@ -22,6 +22,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    flavorDimensions "env"
+    productFlavors {
+        prod {
+            dimension "env"
+            // applicationId ch.mycompassion.app (production)
+        }
+        stage {
+            dimension "env"
+            // Points at stage.compassion.ch. Installs side-by-side with prod.
+            // app_name is overridden in src/stage/res/values/strings.xml.
+            // Reuses the existing ch.mycompassion.app.dev Firebase client.
+            applicationIdSuffix ".dev"
+        }
+    }
 }
 
 repositories {
