@@ -5,7 +5,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 // flavor / iOS "App Stage" scheme so it installs as a separate app.
 const config: CapacitorConfig = {
   appId: "ch.mycompassion.app",
-  appName: "MyCompassionCH",
+  appName: "My Compassion Stage",
   webDir: "www",
   bundledWebRuntime: false,
   "server": {

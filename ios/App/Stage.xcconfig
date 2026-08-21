@@ -1,6 +1,8 @@
-// Stage build overrides. Attach this file to the "Stage" build configuration
+// Stage build overrides. Attached to the "Stage" build configuration
 // (Project ▸ Info ▸ Configurations ▸ Stage ▸ Based on Configuration File).
-// Gives the test app a distinct bundle id (side-by-side install), name and icon.
+// Gives the test app its own bundle id, name, icon and URL scheme so it
+// installs and hands back payments side by side with production.
 PRODUCT_BUNDLE_IDENTIFIER = ch.mycompassion.app.dev
-INFOPLIST_KEY_CFBundleDisplayName = MyCompassion Stage
+APP_DISPLAY_NAME = My Compassion Stage
+APP_URL_SCHEME = mycompassion-stage
 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-Dev

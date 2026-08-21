@@ -145,6 +145,10 @@ public class MainActivity extends BridgeActivity {
         // link in the browser (the in-app page never navigated, so nothing
         // else would hide it).
         hideLoader();
+        // Back from the payment browser: the poll may have been suspended or
+        // given up, and visibilitychange is not dependable here (T3378).
+        bridge.getWebView().evaluateJavascript(
+                "window.my2ResumePaymentPolling && window.my2ResumePaymentPolling()", null);
     }
 
     // ---------------------------------------------------------

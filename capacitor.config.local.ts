@@ -1,15 +1,23 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
+// LOCAL build config. The host has to match the domain of the MyCompassion
+// website record, or Odoo serves the default website instead. Simulator:
+// mycompassion.localhost. Physical phone: set the website domain to
+// mycompassion.<lan-ip>.nip.io and use that here.
 const config: CapacitorConfig = {
   appId: "ch.mycompassion.app",
   appName: "My Compassion",
   webDir: "www",
   bundledWebRuntime: false,
   "server": {
-    "url": "https://mycompassion.ch/web/login",
+    "url": "http://mycompassion.localhost:8069/web/login",
     "errorPath": "maintenance.html",
-    "cleartext": false,
+    "cleartext": true,
     "allowNavigation": [
+        "mycompassion.localhost",
+        "*.localhost",
+        "*.local",
+        "*.nip.io",
         "mycompassion.ch",
         "*.mycompassion.ch",
         "compassion.ch",
