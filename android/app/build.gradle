@@ -9,6 +9,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 8
         versionName "1.0.3"
+        // Overridden by the stage flavour so both apps can be installed at once.
+        manifestPlaceholders = [appUrlScheme: "mycompassion"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
