@@ -6,7 +6,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 // mycompassion.<lan-ip>.nip.io and use that here.
 const config: CapacitorConfig = {
   appId: "ch.mycompassion.app",
-  appName: "MyCompassionCH",
+  appName: "My Compassion",
   webDir: "www",
   bundledWebRuntime: false,
   "server": {

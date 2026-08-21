@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: "ch.mycompassion.app",
-  appName: "MyCompassionCH",
+  appName: "My Compassion",
   webDir: "www",
   bundledWebRuntime: false,
   "server": {
