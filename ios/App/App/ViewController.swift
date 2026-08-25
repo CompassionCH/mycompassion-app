@@ -137,9 +137,11 @@ class ViewController: CAPBridgeViewController, WKScriptMessageHandler, QLPreview
     /// The confirmation page opens mycompassion:// on success only, so a failed
     /// payment stays on screen to be read.
     @objc func handleAppReturnURL(_ notification: Notification) {
+        // iOS only delivers schemes this build registered, so match on the
+        // path instead - the scheme differs per flavour (see Stage.xcconfig).
         guard let payload = notification.object as? [String: Any],
               let url = payload["url"] as? URL,
-              url.scheme == "mycompassion"
+              url.host == "payment"
         else { return }
         dismissPaymentSheet()
     }
