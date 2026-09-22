@@ -130,6 +130,31 @@ public class MainActivity extends BridgeActivity {
         });
     }
 
+    // A POST to the gateway never reaches shouldOverrideUrlLoading, so the
+    // hand-off intent is the only way back from a stranded webview.
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Uri data = intent.getData();
+        if (data == null || !"payment".equals(data.getHost())) {
+            return;
+        }
+        WebView webView = bridge.getWebView();
+        String current = webView.getUrl();
+        if (current != null && isPaymentGatewayUrl(current)) {
+            String target = paymentReturnUrl(data);
+            new Handler(Looper.getMainLooper()).post(() -> webView.loadUrl(target));
+        }
+    }
+
+    // v14 and v18 have different payment pages, so the server names the path.
+    private String paymentReturnUrl(Uri data) {
+        String next = data.getQueryParameter("next");
+        boolean ours = next != null && next.startsWith("/") && !next.startsWith("//");
+        return Uri.parse(bridge.getServerUrl()).buildUpon()
+                .path(ours ? next : "/").clearQuery().fragment(null).build().toString();
+    }
+
     @Override
     public void onPause() {
         super.onPause();
