@@ -208,24 +208,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		0A1B2C3D4E5F60718293A4B5 /* Verify server config */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Verify server config";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Fails the build when the embedded Capacitor config does not match this\n# configuration, so a prod archive can never point at stage (or a stage\n# build at prod). Unset for Debug, which skips the check.\nif [ -z \"$EXPECTED_SERVER_HOST\" ]; then exit 0; fi\nCONFIG=\"$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/capacitor.config.json\"\nif [ ! -f \"$CONFIG\" ]; then echo \"error: $CONFIG missing\"; exit 1; fi\n# Match the server url field, not the whole file: allowNavigation lists\n# both hostnames in every config.\nif ! grep -q \"\\\"url\\\": \\\"https://$EXPECTED_SERVER_HOST\" \"$CONFIG\"; then\n  echo \"error: $CONFIGURATION build must point at $EXPECTED_SERVER_HOST. Run the matching npm sync (sync:prod / sync:dev) and build again.\"\n  exit 1\nfi\n";
-		};
 		015BAF582F7EB0D600D8879B /* Setup Firebase Environment */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -262,6 +244,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
+		0A1B2C3D4E5F60718293A4B5 /* Verify server config */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Verify server config";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Fails the build when the embedded Capacitor config does not match this\n# configuration, so a prod archive can never point at stage (or a stage\n# build at prod). Unset for Debug, which skips the check.\nif [ -z \"$EXPECTED_SERVER_HOST\" ]; then exit 0; fi\nCONFIG=\"$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/capacitor.config.json\"\nif [ ! -f \"$CONFIG\" ]; then echo \"error: $CONFIG missing\"; exit 1; fi\n# Match the server url field, not the whole file: allowNavigation lists\n# both hostnames in every config.\nif ! grep -q \"\\\"url\\\": \\\"https://$EXPECTED_SERVER_HOST\" \"$CONFIG\"; then\n  echo \"error: $CONFIGURATION build must point at $EXPECTED_SERVER_HOST. Run the matching npm sync (sync:prod / sync:dev) and build again.\"\n  exit 1\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -357,7 +357,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 33XBVM48T4;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -365,7 +365,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = ch.mycompassion.app.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -494,7 +494,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 33XBVM48T4;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -502,7 +502,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = ch.mycompassion.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -519,19 +519,19 @@
 				APP_DISPLAY_NAME = "My Compassion";
 				APP_URL_SCHEME = mycompassion;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				EXPECTED_SERVER_HOST = mycompassion.ch;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 33XBVM48T4;
+				EXPECTED_SERVER_HOST = mycompassion.ch;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = ch.mycompassion.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

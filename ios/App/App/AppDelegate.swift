@@ -56,6 +56,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
         // Called when the app was launched with an activity, including Universal Links.
+        // Unread, the tapped URL is lost and the webview stays on server.url (T3481).
+        if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+           let url = userActivity.webpageURL,
+           let controller = window?.rootViewController as? CAPBridgeViewController,
+           let bridge = controller.bridge,
+           url.host == bridge.config.serverURL.host,
+           let webView = bridge.webView {
+            webView.load(URLRequest(url: url))
+            return true
+        }
         // Feel free to add additional processing here, but if you want the App API to support
         // tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)

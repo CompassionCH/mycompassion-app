@@ -128,6 +128,8 @@ public class MainActivity extends BridgeActivity {
                         "})();", null);
             }
         });
+
+        openAppLink(getIntent().getData());
     }
 
     // A POST to the gateway never reaches shouldOverrideUrlLoading, so the
@@ -136,7 +138,11 @@ public class MainActivity extends BridgeActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         Uri data = intent.getData();
-        if (data == null || !"payment".equals(data.getHost())) {
+        if (data == null) {
+            return;
+        }
+        if (!"payment".equals(data.getHost())) {
+            openAppLink(data);
             return;
         }
         WebView webView = bridge.getWebView();
@@ -145,6 +151,20 @@ public class MainActivity extends BridgeActivity {
             String target = paymentReturnUrl(data);
             new Handler(Looper.getMainLooper()).post(() -> webView.loadUrl(target));
         }
+    }
+
+    // App Links start the app with the tapped URL as intent data; unread, the
+    // webview stays on server.url and the link does nothing (T3481).
+    private void openAppLink(Uri data) {
+        if (data == null || !"https".equals(data.getScheme())) {
+            return;
+        }
+        String serverHost = Uri.parse(bridge.getServerUrl()).getHost();
+        if (serverHost == null || !serverHost.equals(data.getHost())) {
+            return;
+        }
+        String url = data.toString();
+        new Handler(Looper.getMainLooper()).post(() -> bridge.getWebView().loadUrl(url));
     }
 
     // v14 and v18 have different payment pages, so the server names the path.
