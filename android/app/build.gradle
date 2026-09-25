@@ -7,10 +7,10 @@ android {
         applicationId "ch.mycompassion.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 9
+        versionCode 10
         versionName "1.0.4"
         // Overridden by the stage flavour so both apps can be installed at once.
-        manifestPlaceholders = [appUrlScheme: "mycompassion"]
+        manifestPlaceholders = [appUrlScheme: "mycompassion", appLinkHost: "mycompassion.ch"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -36,10 +36,32 @@ android {
             // app_name is overridden in src/stage/res/values/strings.xml.
             // Reuses the existing ch.mycompassion.app.dev Firebase client.
             applicationIdSuffix ".dev"
-            // Own scheme too, so a payment hand-off can never reach the
-            // wrong app when both are installed.
-            manifestPlaceholders = [appUrlScheme: "mycompassion-stage"]
+            // Own scheme and App Link host: a build that claims a domain
+            // vouching for the other package fails verification.
+            manifestPlaceholders = [appUrlScheme: "mycompassion-stage", appLinkHost: "stage18.compassion.ch"]
         }
+    }
+}
+
+// Mirrors the iOS "Verify server config" phase: release builds fail when the
+// synced Capacitor config points at the other environment.
+def expectedServerHosts = [prod: "mycompassion.ch", stage: "stage18.compassion.ch"]
+expectedServerHosts.each { flavor, host ->
+    def verify = tasks.register("verify${flavor.capitalize()}ServerConfig") {
+        doLast {
+            def config = file("src/main/assets/capacitor.config.json")
+            def sync = flavor == "stage" ? "sync:dev-android" : "sync:prod-android"
+            if (!config.exists()) {
+                throw new GradleException("${config} missing. Run npm run ${sync} and build again.")
+            }
+            if (!config.text.contains("\"url\": \"https://${host}")) {
+                throw new GradleException(
+                    "${flavor} build must point at ${host}. Run npm run ${sync} and build again.")
+            }
+        }
+    }
+    tasks.matching {it.name == "pre${flavor.capitalize()}ReleaseBuild"}.configureEach {
+        dependsOn verify
     }
 }
 
